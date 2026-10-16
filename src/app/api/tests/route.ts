@@ -1,9 +1,6 @@
 import { TESTS } from "@/lib/diagnostics/catalog";
 import { runSuite } from "@/lib/diagnostics/tests";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 export async function POST(request: Request) {
   let ids: string[] | undefined;
   try {
