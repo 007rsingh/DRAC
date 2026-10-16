@@ -187,7 +187,7 @@ export function BenchConsole() {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[220px_1fr]">
-        <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+        <nav className="flex flex-wrap gap-2 lg:flex-col">
           {SECTIONS.map((item) => (
             <Button
               key={item.id}
