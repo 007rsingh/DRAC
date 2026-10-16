@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bench — BIOS and hardware diagnostics",
-  description: "Run firmware identity checks and non-destructive hardware tests on this host.",
+  title: "AegisGrid — BIOS and hardware diagnostics",
+  description: "Powering modern infrastructure. Run firmware identity checks and non-destructive hardware tests on this host.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import Image from "next/image";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -57,7 +58,7 @@ function barTone(status: Status | "idle"): string {
   if (status === "pass") return "bg-[#41a85f]";
   if (status === "warn") return "bg-[#f0ad1e]";
   if (status === "fail") return "bg-[#e04b3a]";
-  if (status === "info") return "bg-[#0076ce]";
+  if (status === "info") return "bg-[#178709]";
   return "bg-[#b7c0c8]";
 }
 
@@ -234,7 +235,7 @@ export function BenchConsole() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `bench-report-${new Date().toISOString().slice(0, 19)}.json`;
+    link.download = `aegisgrid-report-${new Date().toISOString().slice(0, 19)}.json`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -243,13 +244,14 @@ export function BenchConsole() {
     <div className="min-h-screen bg-[#eef1f4] text-[#1f242b]">
       <header className="border-b border-[#d5dbe1] bg-white">
         <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center bg-[#0076ce] text-sm font-bold text-white">B</div>
-            <div>
-              <div className="text-base leading-none font-semibold tracking-tight">Bench</div>
-              <div className="mt-1 text-xs text-[#5c6770]">System diagnostics</div>
-            </div>
-          </div>
+          <Image
+            src="/aegisgrid-logo.jpg"
+            alt="AegisGrid. Powering modern infrastructure."
+            width={1082}
+            height={217}
+            priority
+            className="h-12 w-auto bg-[#d9d9d9] sm:h-16"
+          />
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <div>
               <div className="text-[11px] tracking-wide text-[#5c6770] uppercase">System</div>
@@ -276,8 +278,8 @@ export function BenchConsole() {
                   onClick={() => setSection(item.id)}
                   className={`border-b-2 px-3 py-2.5 text-sm font-medium ${
                     active
-                      ? "border-[#0076ce] text-[#0076ce]"
-                      : "border-transparent text-[#3d4750] hover:bg-white hover:text-[#0076ce]"
+                      ? "border-[#178709] text-[#146b08]"
+                      : "border-transparent text-[#3d4750] hover:bg-white hover:text-[#f47b04]"
                   }`}
                 >
                   {item.label}
@@ -529,7 +531,7 @@ function rowsFor(section: SectionId, inventory: Inventory): { label: string; val
 }
 
 function SectionIcon({ section }: { section: SectionId }) {
-  const className = "size-4 text-[#0076ce]";
+  const className = "size-4 text-[#178709]";
   if (section === "bios") return <Shield className={className} />;
   if (section === "cpu") return <Cpu className={className} />;
   if (section === "memory") return <MemoryStick className={className} />;
