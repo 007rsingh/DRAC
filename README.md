@@ -1,10 +1,10 @@
-# Bench
+# AegisGrid
 
-Bench is a browser console for BIOS and hardware diagnostics. It reads the machine that is running the server, shows firmware and component inventory, and runs a short non-destructive suite.
+AegisGrid is a browser console for BIOS and hardware diagnostics. It reads the machine that is running the server, shows firmware and component inventory, and runs a short non-destructive suite.
 
 The checks cover SMBIOS identity, firmware date, UEFI versus legacy boot, online CPUs, a compute sample, kernel speculative-execution status, memory headroom, a 32 MiB pattern sample, root filesystem space, a 1 MiB disk round trip, link state, and the default route.
 
-Bench does not flash firmware, wipe disks, or walk every DIMM. Use a vendor offline tool when you need a full memory or surface scan.
+AegisGrid does not flash firmware, wipe disks, or walk every DIMM. Use a vendor offline tool when you need a full memory or surface scan.
 
 ## Run
 
@@ -31,4 +31,4 @@ npm run lint
 | Disks | `lsblk`, `df`, and a temp-file hash |
 | Network | `/sys/class/net` and `/proc/net/route` |
 
-Virtual machines often hide SMBIOS. Those checks report as warnings instead of pretending a BIOS version was found. Run Bench on the bare-metal host you want to diagnose.
+Virtual machines often hide SMBIOS. Those checks report as warnings instead of pretending a BIOS version was found. Run AegisGrid on the bare-metal host you want to diagnose.
