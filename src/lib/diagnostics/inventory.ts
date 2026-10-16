@@ -11,6 +11,7 @@ import {
   parseMeminfo,
   type LsblkDevice,
 } from "./parse";
+import { collectSensors } from "./sensors";
 import type { BiosInfo, Inventory, NicInfo } from "./types";
 
 const DMI_FILES = [
@@ -46,7 +47,7 @@ function blankToNull(value: string | undefined): string | null {
 
 export async function collectInventory(): Promise<Inventory> {
   const notes: string[] = [];
-  const [hostnameOut, kernelOut, osRelease, uptimeText, cpuText, memText, lsblk, dfText, routeText, uefi] =
+  const [hostnameOut, kernelOut, osRelease, uptimeText, cpuText, memText, lsblk, dfText, routeText, uefi, sensors] =
     await Promise.all([
       runCommand("hostname", []),
       runCommand("uname", ["-srm"]),
@@ -58,6 +59,7 @@ export async function collectInventory(): Promise<Inventory> {
       runCommand("df", ["-B1", "-P"]),
       readText("/proc/net/route"),
       exists("/sys/firmware/efi"),
+      collectSensors(),
     ]);
 
   const cpu = parseColonTable(cpuText.stdout);
@@ -81,6 +83,11 @@ export async function collectInventory(): Promise<Inventory> {
         "SMBIOS is not visible here. Hypervisors and containers often hide BIOS tables. On a bare-metal host, install dmidecode and allow the service account to read it.",
       );
     }
+  }
+  if (sensors.every((sensor) => sensor.state === "absent")) {
+    notes.push(
+      "BMC sensors are not visible here. Temperatures, fans, power supplies, voltage rails, and chassis intrusion appear when IPMI or hwmon is available on the server.",
+    );
   }
 
   const bios: BiosInfo = {
@@ -204,6 +211,7 @@ export async function collectInventory(): Promise<Inventory> {
       interfaces,
       defaultRouteInterface: parseDefaultRouteInterface(routeText ?? ""),
     },
+    sensors,
     notes,
   };
 }

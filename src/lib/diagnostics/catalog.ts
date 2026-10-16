@@ -14,6 +14,7 @@ export const SECTIONS: { id: SectionId | "overview"; label: string }[] = [
   { id: "memory", label: "Memory" },
   { id: "storage", label: "Storage" },
   { id: "network", label: "Network" },
+  { id: "sensors", label: "Sensors" },
 ];
 
 export const TESTS: TestDefinition[] = [
@@ -88,6 +89,36 @@ export const TESTS: TestDefinition[] = [
     section: "network",
     title: "Default route",
     blurb: "Confirms the kernel has a default route.",
+  },
+  {
+    id: "sensors-thermal",
+    section: "sensors",
+    title: "Thermal sensors",
+    blurb: "Checks inlet, exhaust, CPU, DIMM, board, drive, and accelerator temperatures.",
+  },
+  {
+    id: "sensors-fans",
+    section: "sensors",
+    title: "Fans",
+    blurb: "Checks system fan speed and whether cooling is redundant.",
+  },
+  {
+    id: "sensors-power",
+    section: "sensors",
+    title: "Power supplies",
+    blurb: "Checks PSU presence, system power, and supply redundancy.",
+  },
+  {
+    id: "sensors-voltage",
+    section: "sensors",
+    title: "Voltage rails",
+    blurb: "Checks 12V, 5V, 3.3V, CPU Vcore, and the CMOS battery.",
+  },
+  {
+    id: "sensors-chassis",
+    section: "sensors",
+    title: "Chassis intrusion",
+    blurb: "Checks whether the chassis is open.",
   },
 ];
 

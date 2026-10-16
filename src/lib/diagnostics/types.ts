@@ -1,6 +1,22 @@
 export type Status = "pass" | "warn" | "fail" | "skip" | "info";
 
-export type SectionId = "bios" | "cpu" | "memory" | "storage" | "network";
+export type SectionId = "bios" | "cpu" | "memory" | "storage" | "network" | "sensors";
+
+export type SensorGroup = "temperature" | "fan" | "power" | "voltage" | "chassis";
+
+export type SensorState = "ok" | "warning" | "critical" | "absent";
+
+export type SensorReading = {
+  id: string;
+  group: SensorGroup;
+  name: string;
+  unit: string;
+  value: number | null;
+  display: string;
+  state: SensorState;
+  limit: string;
+  source: string | null;
+};
 
 export type Evidence = {
   label: string;
@@ -112,6 +128,7 @@ export type Inventory = {
   memory: MemoryInfo;
   storage: StorageInfo;
   network: NetworkInfo;
+  sensors: SensorReading[];
   notes: string[];
 };
 

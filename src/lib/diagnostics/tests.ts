@@ -6,7 +6,8 @@ import { TESTS } from "./catalog";
 import { formatBytes } from "./format";
 import { collectInventory } from "./inventory";
 import { parseBiosDate } from "./parse";
-import type { Finding, Inventory, Status, SuiteReport } from "./types";
+import { sensorsIn } from "./sensors";
+import type { Finding, Inventory, SensorGroup, Status, SuiteReport } from "./types";
 
 function finding(
   partial: Omit<Finding, "durationMs" | "evidence" | "detail"> & {
@@ -377,6 +378,39 @@ async function networkRoute(inventory: Inventory): Promise<Finding> {
   });
 }
 
+async function sensorGroup(inventory: Inventory, id: string, title: string, group: SensorGroup): Promise<Finding> {
+  const started = process.hrtime.bigint();
+  const rows = sensorsIn(inventory.sensors, group);
+  const present = rows.filter((row) => row.state !== "absent");
+  const critical = rows.filter((row) => row.state === "critical");
+  const warning = rows.filter((row) => row.state === "warning");
+  let status: Status = "pass";
+  let summary = `${present.length} ${title.toLowerCase()} sensor${present.length === 1 ? "" : "s"} inside limits.`;
+  if (present.length === 0) {
+    status = "warn";
+    summary = `${title} sensors are not exposed on this host.`;
+  } else if (critical.length) {
+    status = "fail";
+    summary = critical.map((row) => `${row.name} ${row.display}`).join(", ");
+  } else if (warning.length) {
+    status = "warn";
+    summary = warning.map((row) => `${row.name} ${row.display}`).join(", ");
+  }
+  return finding({
+    started,
+    id,
+    section: "sensors",
+    title,
+    status,
+    summary,
+    detail:
+      present.length === 0
+        ? "A server BMC publishes these through IPMI or the hwmon driver. This console still lists every required sensor so the gap is visible."
+        : "Limits follow common rack-server thresholds for inlet air, component temperature, fan speed, and voltage tolerance.",
+    evidence: rows.map((row) => ({ label: row.name, value: row.display })),
+  });
+}
+
 const RUNNERS: Record<string, (inventory: Inventory) => Promise<Finding>> = {
   "bios-smbios": biosSmbios,
   "bios-date": biosDate,
@@ -390,6 +424,11 @@ const RUNNERS: Record<string, (inventory: Inventory) => Promise<Finding>> = {
   "storage-roundtrip": storageRoundtrip,
   "network-link": networkLink,
   "network-route": networkRoute,
+  "sensors-thermal": (inventory) => sensorGroup(inventory, "sensors-thermal", "Thermal", "temperature"),
+  "sensors-fans": (inventory) => sensorGroup(inventory, "sensors-fans", "Fan", "fan"),
+  "sensors-power": (inventory) => sensorGroup(inventory, "sensors-power", "Power", "power"),
+  "sensors-voltage": (inventory) => sensorGroup(inventory, "sensors-voltage", "Voltage", "voltage"),
+  "sensors-chassis": (inventory) => sensorGroup(inventory, "sensors-chassis", "Chassis", "chassis"),
 };
 
 export async function runSuite(ids?: string[]): Promise<SuiteReport> {

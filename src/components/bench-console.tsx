@@ -13,12 +13,13 @@ import {
   Network,
   RefreshCw,
   Shield,
+  Thermometer,
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SECTIONS, TESTS, testsFor } from "@/lib/diagnostics/catalog";
 import { formatBytes, formatUptime } from "@/lib/diagnostics/format";
-import type { Finding, Inventory, SectionId, Status, SuiteReport } from "@/lib/diagnostics/types";
+import type { Finding, Inventory, SectionId, SensorReading, SensorState, Status, SuiteReport } from "@/lib/diagnostics/types";
 
 const NAV: { id: (typeof SECTIONS)[number]["id"]; label: string }[] = [
   { id: "overview", label: "Dashboard" },
@@ -27,6 +28,7 @@ const NAV: { id: (typeof SECTIONS)[number]["id"]; label: string }[] = [
   { id: "memory", label: "Memory" },
   { id: "storage", label: "Storage" },
   { id: "network", label: "Network" },
+  { id: "sensors", label: "Sensors" },
 ];
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -328,7 +330,7 @@ export function BenchConsole() {
 
         {loadingInventory && !inventory ? (
           <Panel title="Reading this host">
-            <p className="text-sm text-[#5c6770]">Collecting firmware, processor, memory, disk, and link data.</p>
+            <p className="text-sm text-[#5c6770]">Collecting firmware, processors, memory, storage, network, and BMC sensors.</p>
           </Panel>
         ) : null}
 
@@ -398,10 +400,11 @@ function SectionBody({
       { id: "memory", label: "Memory" },
       { id: "storage", label: "Storage" },
       { id: "network", label: "Network" },
+      { id: "sensors", label: "Sensors" },
     ];
     return (
       <div className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => {
             const related = findings.filter((item) => item.section === group.id);
             const status = rollup(related);
@@ -450,7 +453,11 @@ function SectionBody({
               ]}
             />
             {inventory.notes.length > 0 ? (
-              <p className="mt-3 border border-[#f0d7a2] bg-[#fff8eb] px-3 py-2 text-sm text-[#8a5a00]">{inventory.notes[0]}</p>
+              <div className="mt-3 space-y-2">
+                {inventory.notes.map((note) => (
+                  <p key={note} className="border border-[#f0d7a2] bg-[#fff8eb] px-3 py-2 text-sm text-[#8a5a00]">{note}</p>
+                ))}
+              </div>
             ) : null}
           </Panel>
         </div>
@@ -459,6 +466,26 @@ function SectionBody({
   }
 
   const tests = testsFor(section);
+  if (section === "sensors") {
+    return (
+      <Panel
+        title="Sensors"
+        action={
+          <Button
+            variant="outline"
+            className="rounded-sm bg-white"
+            disabled={Boolean(running)}
+            onClick={() => onRun(tests.map((test) => test.id), section)}
+          >
+            {running === section ? "Running…" : "Run these checks"}
+          </Button>
+        }
+      >
+        <p className="mb-3 text-sm text-[#5c6770]">{tests.map((test) => test.blurb).join(" ")}</p>
+        <SensorBoard readings={inventory.sensors} />
+      </Panel>
+    );
+  }
   return (
     <Panel
       title={NAV.find((item) => item.id === section)?.label ?? "Details"}
@@ -530,11 +557,71 @@ function rowsFor(section: SectionId, inventory: Inventory): { label: string; val
   }));
 }
 
+function sensorStateLabel(state: SensorState): string {
+  if (state === "ok") return "OK";
+  if (state === "warning") return "Warning";
+  if (state === "critical") return "Critical";
+  return "Not exposed";
+}
+
+function sensorStateClass(state: SensorState): string {
+  if (state === "ok") return "text-[#1b7a32]";
+  if (state === "warning") return "text-[#8a5a00]";
+  if (state === "critical") return "text-[#b42318]";
+  return "text-[#5c6770]";
+}
+
+function SensorBoard({ readings }: { readings: SensorReading[] }) {
+  const groups: { id: SensorReading["group"]; label: string }[] = [
+    { id: "temperature", label: "Temperature" },
+    { id: "fan", label: "Fans" },
+    { id: "power", label: "Power" },
+    { id: "voltage", label: "Voltage" },
+    { id: "chassis", label: "Chassis" },
+  ];
+  return (
+    <div className="space-y-5">
+      {groups.map((group) => (
+        <div key={group.id}>
+          <h3 className="mb-2 text-xs font-semibold tracking-wide text-[#5c6770] uppercase">{group.label}</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-[#d5dbe1] text-left text-[11px] tracking-wide text-[#5c6770] uppercase">
+                  <th className="py-2 pr-3 font-medium">Sensor</th>
+                  <th className="py-2 pr-3 font-medium">Reading</th>
+                  <th className="py-2 pr-3 font-medium">Limit</th>
+                  <th className="py-2 pr-3 font-medium">State</th>
+                  <th className="py-2 font-medium">Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {readings
+                  .filter((reading) => reading.group === group.id)
+                  .map((reading) => (
+                    <tr key={reading.id} className="border-b border-[#eef1f4]">
+                      <td className="py-2 pr-3 font-medium">{reading.name}</td>
+                      <td className="py-2 pr-3">{reading.display}</td>
+                      <td className="py-2 pr-3 text-[#5c6770]">{reading.limit}</td>
+                      <td className={`py-2 pr-3 font-semibold ${sensorStateClass(reading.state)}`}>{sensorStateLabel(reading.state)}</td>
+                      <td className="py-2 text-[#5c6770]">{reading.source ?? "BMC not visible"}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SectionIcon({ section }: { section: SectionId }) {
   const className = "size-4 text-[#178709]";
   if (section === "bios") return <Shield className={className} />;
   if (section === "cpu") return <Cpu className={className} />;
   if (section === "memory") return <MemoryStick className={className} />;
   if (section === "storage") return <HardDrive className={className} />;
+  if (section === "sensors") return <Thermometer className={className} />;
   return <Network className={className} />;
 }
